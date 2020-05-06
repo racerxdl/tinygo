@@ -7,11 +7,14 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/tinygo-org/tinygo/compileopts"
@@ -59,7 +62,7 @@ func GetCachedGoroot(config *compileopts.Config) (string, error) {
 	}
 
 	for _, name := range []string{"bin", "lib", "pkg"} {
-		err = os.Symlink(filepath.Join(goroot, name), filepath.Join(tmpgoroot, name))
+		err = symlink(filepath.Join(goroot, name), filepath.Join(tmpgoroot, name))
 		if err != nil {
 			return "", err
 		}
@@ -91,7 +94,7 @@ func mergeDirectory(goroot, tinygoroot, tmpgoroot, importPath string, overrides 
 			// root, so simply make a symlink.
 			newname := filepath.Join(tmpgoroot, "src", importPath)
 			oldname := filepath.Join(tinygoroot, "src", importPath)
-			return os.Symlink(oldname, newname)
+			return symlink(oldname, newname)
 		}
 
 		// Merge subdirectories. Start by making the directory to merge.
@@ -117,7 +120,7 @@ func mergeDirectory(goroot, tinygoroot, tmpgoroot, importPath string, overrides 
 				// A file, so symlink this.
 				newname := filepath.Join(tmpgoroot, "src", importPath, e.Name())
 				oldname := filepath.Join(tinygoroot, "src", importPath, e.Name())
-				err := os.Symlink(oldname, newname)
+				err := symlink(oldname, newname)
 				if err != nil {
 					return err
 				}
@@ -143,7 +146,7 @@ func mergeDirectory(goroot, tinygoroot, tmpgoroot, importPath string, overrides 
 			}
 			newname := filepath.Join(tmpgoroot, "src", importPath, e.Name())
 			oldname := filepath.Join(goroot, "src", importPath, e.Name())
-			err := os.Symlink(oldname, newname)
+			err := symlink(oldname, newname)
 			if err != nil {
 				return err
 			}
@@ -173,4 +176,37 @@ func pathsToOverride(needsSyscallPackage bool) map[string]bool {
 		paths["syscall/"] = true // include syscall/js
 	}
 	return paths
+}
+
+// symlink creates a symlink or something similar. On Unix-like systems, it
+// creates a symlink. On Windows, it creates a hardlink or directory junction
+// instead.
+//
+// While Windows 10 does support symbolic links and allows them to be created
+// using os.Symlink, it will only work when developer mode is enabled. To make
+// sure Windows support is consistent for everyone, always avoid symlinks on
+// Windows.
+func symlink(oldname, newname string) error {
+	if runtime.GOOS == "windows" {
+		st, err := os.Stat(oldname)
+		if err != nil {
+			return err
+		}
+		if st.IsDir() {
+			// Make a directory junction. There may be a way to do this
+			// programmatically, but it involves a lot of magic. Use the mklink
+			// command built into cmd instead (mklink is a builtin, not an
+			// external command).
+			return exec.Command("cmd", "/k", "mklink", "/J", newname, oldname).Run()
+		} else {
+			// Make a hard link.
+			err := os.Link(oldname, newname)
+			if err != nil {
+				fmt.Printf("err: %#v\n", err)
+				fmt.Printf("     %#v\n", err.(*os.LinkError).Err)
+			}
+			return err
+		}
+	}
+	return os.Symlink(oldname, newname)
 }
