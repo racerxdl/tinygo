@@ -33,8 +33,6 @@ const (
 	EWOULDBLOCK Errno = EAGAIN
 )
 
-type Signal int
-
 const (
 	SIGCHLD Signal = 0x14
 	SIGINT  Signal = 0x2

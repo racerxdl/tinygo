@@ -95,6 +95,20 @@ func NewTargetMachine(config *compileopts.Config) (llvm.TargetMachine, error) {
 	return machine, nil
 }
 
+// NewTargetMachinePIC returns a new llvm.TargetMachine based on the passed-in
+// configuration. It is used by the compiler and is needed for machine code
+// emission.
+// Same as NewTargetMachine but generates PIC Code
+func NewTargetMachinePIC(config *compileopts.Config) (llvm.TargetMachine, error) {
+	target, err := llvm.GetTargetFromTriple(config.Triple())
+	if err != nil {
+		return llvm.TargetMachine{}, err
+	}
+	features := strings.Join(config.Features(), ",")
+	machine := target.CreateTargetMachine(config.Triple(), config.CPU(), features, llvm.CodeGenLevelDefault, llvm.RelocPIC, llvm.CodeModelDefault)
+	return machine, nil
+}
+
 // Compile the given package path or .go file path. Return an error when this
 // fails (in any stage). If successful it returns the LLVM module and a list of
 // extra C files to be compiled. If not, one or more errors will be returned.
