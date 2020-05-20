@@ -17,6 +17,8 @@ var _ unsafe.Pointer
 
 const C.SOME_CONST_3 = 1234
 
+type C.double = float64
+type C.float = float32
 type C.int16_t = int16
 type C.int32_t = int32
 type C.int64_t = int64

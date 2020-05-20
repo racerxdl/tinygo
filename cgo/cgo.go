@@ -115,6 +115,9 @@ var cgoAliases = map[string]string{
 	"C.uint32_t":  "uint32",
 	"C.uint64_t":  "uint64",
 	"C.uintptr_t": "uintptr",
+	"C.float":     "float32",
+	"C.double":    "float64",
+
 }
 
 // builtinAliases are handled specially because they only exist on the Go side
