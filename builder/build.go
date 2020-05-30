@@ -31,35 +31,17 @@ func Build(pkgName, outpath string, config *compileopts.Config, action func(stri
 	var err error
 	var machine llvm.TargetMachine
 
-	isNintendoSwitch := false
-	for _, v := range config.Target.BuildTags {
-		if v == "nintendoswitch" {
-			isNintendoSwitch = true
-			break
-		}
-	}
-
 	// Compile Go code to IR.
-	if isNintendoSwitch {
-		// Nintendo Switch needs PIC code due ASLR
-		machine, err = compiler.NewTargetMachinePIC(config)
-	} else {
-		machine, err = compiler.NewTargetMachine(config)
-	}
+	machine, err = compiler.NewTargetMachine(config)
 
 	if err != nil {
 		return err
 	}
+
 	mod, extraFiles, extraLDFlags, errs := compiler.Compile(pkgName, machine, config)
 	if errs != nil {
 		return newMultiError(errs)
 	}
-
-	//if isNintendoSwitch {
-	//	// Enable PIE flag on LLVM
-	//	// Probably not required since devkitpro does that
-	//	mod.AddModuleFlagUInt32("PIE Level", 2)
-	//}
 
 	if config.Options.PrintIR {
 		fmt.Println("; Generated LLVM IR:")
@@ -182,15 +164,23 @@ func Build(pkgName, outpath string, config *compileopts.Config, action func(stri
 		}
 
 		root := goenv.Get("TINYGOROOT")
+		dkp := os.Getenv("DEVKITPRO")
 		// If Nintendo Switch, add libnx
-		if isNintendoSwitch {
+		if config.Target.Linker == "devKitPro" {
 			// Use devKitPro
-			dkp := os.Getenv("DEVKITPRO")
 			if dkp == "" {
 				return &commandError{"Nintendo Switch requires devKitPro. Check https://switchbrew.org/wiki/Setting_up_Development_Environment", config.Target.Linker, fmt.Errorf("DEVKITPRO environment not found")}
 			}
 
 			config.Target.Linker = path.Join(dkp, "devkitA64", "bin", "aarch64-none-elf-gcc")
+		}
+
+		if config.Target.Libc == "libnx" {
+			// libnx requires devKitProA64
+			if dkp == "" {
+				return &commandError{"Nintendo Switch requires devKitPro. Check https://switchbrew.org/wiki/Setting_up_Development_Environment", config.Target.Linker, fmt.Errorf("DEVKITPRO environment not found")}
+			}
+
 			libnxpath := path.Join(dkp, "libnx")
 			ldflags = append(ldflags, "-L"+path.Join(libnxpath, "lib"), "-lnx")
 			ldflags = append(ldflags, "-specs="+path.Join(libnxpath, "switch.specs"))

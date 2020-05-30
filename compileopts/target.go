@@ -49,6 +49,7 @@ type TargetSpec struct {
 	OpenOCDTarget    string   `json:"openocd-target"`
 	OpenOCDTransport string   `json:"openocd-transport"`
 	JLinkDevice      string   `json:"jlink-device"`
+	RelocationModel  string   `json:"relocation-model"`
 }
 
 // copyProperties copies all properties that are set in spec2 into itself.
@@ -129,6 +130,9 @@ func (spec *TargetSpec) copyProperties(spec2 *TargetSpec) {
 	}
 	if spec2.JLinkDevice != "" {
 		spec.JLinkDevice = spec2.JLinkDevice
+	}
+	if spec2.RelocationModel != "" {
+		spec.RelocationModel = spec2.RelocationModel
 	}
 }
 
@@ -262,16 +266,17 @@ func defaultTarget(goos, goarch, triple string) (*TargetSpec, error) {
 	// No target spec available. Use the default one, useful on most systems
 	// with a regular OS.
 	spec := TargetSpec{
-		Triple:      triple,
-		GOOS:        goos,
-		GOARCH:      goarch,
-		BuildTags:   []string{goos, goarch},
-		Compiler:    "clang",
-		Linker:      "cc",
-		CFlags:      []string{"--target=" + triple},
-		GDB:         "gdb",
-		PortReset:   "false",
-		FlashMethod: "native",
+		Triple:          triple,
+		GOOS:            goos,
+		GOARCH:          goarch,
+		BuildTags:       []string{goos, goarch},
+		Compiler:        "clang",
+		Linker:          "cc",
+		CFlags:          []string{"--target=" + triple},
+		GDB:             "gdb",
+		PortReset:       "false",
+		FlashMethod:     "native",
+		RelocationModel: "static",
 	}
 	if goos == "darwin" {
 		spec.LDFlags = append(spec.LDFlags, "-Wl,-dead_strip")

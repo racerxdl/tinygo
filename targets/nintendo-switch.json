@@ -4,10 +4,11 @@
   "goos": "linux",
   "goarch": "arm64",
   "compiler": "aarch64-none-elf-gcc",
-  "linker": "aarch64-none-elf-gcc",
+  "linker": "devKitPro",
   "rtlib": "none",
-  "libc": "none",
+  "libc": "libnx",
   "gc": "extalloc",
+  "relocation-model": "pic",
   "cflags": [
     "-march=armv8-a+crc+crypto",
     "-mtune=cortex-a57",
