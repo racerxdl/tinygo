@@ -91,21 +91,19 @@ func NewTargetMachine(config *compileopts.Config) (llvm.TargetMachine, error) {
 		return llvm.TargetMachine{}, err
 	}
 	features := strings.Join(config.Features(), ",")
-	machine := target.CreateTargetMachine(config.Triple(), config.CPU(), features, llvm.CodeGenLevelDefault, llvm.RelocStatic, llvm.CodeModelDefault)
-	return machine, nil
-}
 
-// NewTargetMachinePIC returns a new llvm.TargetMachine based on the passed-in
-// configuration. It is used by the compiler and is needed for machine code
-// emission.
-// Same as NewTargetMachine but generates PIC Code
-func NewTargetMachinePIC(config *compileopts.Config) (llvm.TargetMachine, error) {
-	target, err := llvm.GetTargetFromTriple(config.Triple())
-	if err != nil {
-		return llvm.TargetMachine{}, err
+	relocationModel := llvm.RelocStatic
+
+	switch config.Target.RelocationModel {
+	case "static":
+		relocationModel = llvm.RelocStatic
+	case "pic":
+		relocationModel = llvm.RelocPIC
+	case "dynamicnopic":
+		relocationModel = llvm.RelocDynamicNoPic
 	}
-	features := strings.Join(config.Features(), ",")
-	machine := target.CreateTargetMachine(config.Triple(), config.CPU(), features, llvm.CodeGenLevelDefault, llvm.RelocPIC, llvm.CodeModelDefault)
+
+	machine := target.CreateTargetMachine(config.Triple(), config.CPU(), features, llvm.CodeGenLevelDefault, relocationModel, llvm.CodeModelDefault)
 	return machine, nil
 }
 
