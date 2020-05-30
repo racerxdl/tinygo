@@ -24,20 +24,20 @@ func sleepTicks(d timeUnit) {
 }
 
 // getArmSystemTimeNs returns ARM cpu ticks converted to nanoseconds
-func getArmSystemTimeNs() uint64 {
+func getArmSystemTimeNs() timeUnit {
 	t := getArmSystemTick()
-	return armTicksToNs(t)
+	return timeUnit(ticksToNanoseconds(timeUnit(t)))
 }
 
 // armTicksToNs converts cpu ticks to nanoseconds
 // Nintendo Switch CPU ticks has a fixed rate at 19200000
 // It is basically 52 ns per tick
-func armTicksToNs(tick uint64) uint64 {
-	return tick * 52
+func ticksToNanoseconds(tick timeUnit) int64 {
+	return int64(tick * 52)
 }
 
-func armNsToTicks(ns int64) int64 {
-	return ns / 52
+func nanosecondsToTicks(ns int64) timeUnit {
+	return timeUnit(ns / 52)
 }
 
 func ticks() timeUnit {
@@ -68,9 +68,9 @@ func abort() {
 func exit(code int) int
 
 //go:export armGetSystemTick
-func getArmSystemTick() uint64
+func getArmSystemTick() int64
 
 // armGetSystemTickFreq returns the system tick frequency
 // means how many ticks per second
 //go:export armGetSystemTickFreq
-func armGetSystemTickFreq() uint64
+func armGetSystemTickFreq() int64
