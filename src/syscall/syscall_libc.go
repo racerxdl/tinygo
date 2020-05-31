@@ -89,20 +89,20 @@ func splitString(p string) (buf *byte, len uintptr) {
 }
 
 // int write(int fd, const void *buf, size_t cnt)
-//go:export write
+//export write
 func libc_write(fd int32, buffer *byte, size uint) int
 
 // int read(int fd, void *buf, size_t count);
-//go:export read
+//export read
 func libc_read(fd int32, buffer *byte, size uint) int
 
 // int close(int fd);
-//go:export close
+//export close
 func libc_close(fd int32) int
 
 // int open(const char *pathname, int flags, mode_t mode);
-//go:export open
+//export open
 func libc_open(pathname *byte, flags uint, mode uint) int
 
-//go:export lseek
+//export lseek
 func libc_lseek(fd int32, offset int64, whence int) int64

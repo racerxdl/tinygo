@@ -4,7 +4,6 @@ package runtime
 
 type timeUnit int64
 
-const tickMicros = 1000 // (1000 * 625) / 12
 const asyncScheduler = false
 
 func postinit() {}
@@ -64,13 +63,13 @@ func abort() {
 	exit(1)
 }
 
-//go:export exit
+//export exit
 func exit(code int) int
 
-//go:export armGetSystemTick
+//export armGetSystemTick
 func getArmSystemTick() int64
 
 // armGetSystemTickFreq returns the system tick frequency
 // means how many ticks per second
-//go:export armGetSystemTickFreq
+//export armGetSystemTickFreq
 func armGetSystemTickFreq() int64
